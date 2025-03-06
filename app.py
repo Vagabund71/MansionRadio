@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import threading
 import random
 
-load_dotenv()  # Загружаем переменные из .env для локального запуска
+load_dotenv()
 API_TOKEN = os.getenv('API_TOKEN')
 if not API_TOKEN:
     raise ValueError("Токен не найден в переменных окружения!")
@@ -74,7 +74,6 @@ def stream_audio():
                     print(f"Ошибка стриминга {yandex_link}: {e}")
                     continue
                 time.sleep(0.05)
-            
             start_index = 0
 
     return Response(generate(), mimetype='audio/mpeg')
@@ -100,10 +99,21 @@ def send_welcome(message):
         bot.reply_to(message, f"Ошибка: {e}")
 
 def run_flask():
+    print("Запуск Flask-сервера...")
     app.run(host='0.0.0.0', port=5000)
 
+def run_bot():
+    print("Запуск Telegram бота...")
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print(f"Polling завершён с ошибкой: {e}")
+
 if __name__ == '__main__':
-    print("Бот запускается...")
+    print("Приложение запускается...")
     flask_thread = threading.Thread(target=run_flask)
+    bot_thread = threading.Thread(target=run_bot)
     flask_thread.start()
-    bot.infinity_polling()
+    bot_thread.start()
+    flask_thread.join()
+    bot_thread.join()
