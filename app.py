@@ -98,14 +98,10 @@ def send_welcome(message):
         bot.reply_to(message, f"Ошибка: {e}")
 
 def run_bot():
-    print("Запуск Telegram бота...")
-    try:
-        bot.infinity_polling()
-    except Exception as e:
-        print(f"Polling завершён с ошибкой: {e}")
+    print("Telegram polling отключен для теста")
 
 if __name__ == '__main__':
     print("Приложение запускается...")
     bot_thread = threading.Thread(target=run_bot)
     bot_thread.start()
-    app.run(host='0.0.0.0', port=5000)  # Flask в основном потоке
+    app.run(host='0.0.0.0', port=5000)
