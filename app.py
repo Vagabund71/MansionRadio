@@ -41,7 +41,8 @@ YANDEX_LINKS = [
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/Hf_OQYIkxrWNlw"
 ]
 
-current_song_index = 0
+# Устанавливаем случайный начальный индекс при запуске
+current_song_index = random.randint(0, len(YANDEX_LINKS) - 1)
 current_song_start_time = time.time()
 
 @app.route('/')
@@ -88,7 +89,7 @@ def send_radio_button(chat_id):
     keyboard = telebot.types.InlineKeyboardMarkup()
     web_app_button = telebot.types.InlineKeyboardButton(
         text="▶️ Запустить радио",
-        web_app=telebot.types.WebAppInfo(url="https://mansionradio.onrender.com")  # Обновите после деплоя
+        web_app=telebot.types.WebAppInfo(url="https://mansionradio.onrender.com")
     )
     keyboard.add(web_app_button)
     bot.send_message(
