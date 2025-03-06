@@ -88,7 +88,7 @@ def send_radio_button(chat_id):
     keyboard = telebot.types.InlineKeyboardMarkup()
     web_app_button = telebot.types.InlineKeyboardButton(
         text="▶️ Запустить радио",
-        web_app=telebot.types.WebAppInfo(url="https://mansionradio.dockhost.ru")  # Обновите после деплоя
+        web_app=telebot.types.WebAppInfo(url="https://mansionradio.onrender.com")  # Обновите после деплоя
     )
     keyboard.add(web_app_button)
     bot.send_message(
