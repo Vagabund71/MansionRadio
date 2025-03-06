@@ -77,31 +77,34 @@ def stream_audio():
             start_index = 0
     return Response(generate(), mimetype='audio/mpeg')
 
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    try:
-        print(f"Команда /start от {message.from_user.id}")
-        keyboard = telebot.types.InlineKeyboardMarkup()
-        web_app_button = telebot.types.InlineKeyboardButton(
-            text="▶️ Запустить радио",
-            web_app=telebot.types.WebAppInfo(url="https://mansionradio.onrender.com")
-        )
-        keyboard.add(web_app_button)
-        bot.reply_to(
-            message,
-            "🎧 Добро пожаловать в наше DJ-радио!\n\n"
-            "Нажми кнопку ниже, чтобы запустить радио.",
-            reply_markup=keyboard
-        )
-    except Exception as e:
-        print(f"Ошибка в /start: {e}")
-        bot.reply_to(message, f"Ошибка: {e}")
+def send_radio_button(chat_id):
+    """Отправляет сообщение с кнопкой Web App."""
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    web_app_button = telebot.types.InlineKeyboardButton(
+        text="▶️ Запустить радио",
+        web_app=telebot.types.WebAppInfo(url="https://mansionradio.onrender.com")
+    )
+    keyboard.add(web_app_button)
+    bot.send_message(
+        chat_id,
+        "🎧 Добро пожаловать в наше DJ-радио!\n\n"
+        "Нажми кнопку ниже, чтобы запустить радио.",
+        reply_markup=keyboard
+    )
 
-def run_bot():
-    print("Telegram polling отключен для теста")
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    """Обрабатывает команду /start."""
+    print(f"Команда /start от {message.from_user.id}")
+    send_radio_button(message.chat.id)
+
+@bot.message_handler(content_types=['text', 'photo', 'video', 'audio', 'document', 'sticker'])
+def handle_all_messages(message):
+    """Обрабатывает любые сообщения и отправляет кнопку."""
+    print(f"Сообщение от {message.from_user.id}: {message.text if message.text else 'не текст'}")
+    send_radio_button(message.chat.id)
 
 if __name__ == '__main__':
     print("Приложение запускается...")
-    bot_thread = threading.Thread(target=run_bot)
-    bot_thread.start()
+    threading.Thread(target=bot.infinity_polling, daemon=True).start()
     app.run(host='0.0.0.0', port=5000)
