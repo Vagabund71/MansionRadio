@@ -15,7 +15,7 @@ if not API_TOKEN:
 bot = telebot.TeleBot(API_TOKEN)
 
 app = Flask(__name__)
-app.static_folder = 'static'  # Указываем папку static
+app.static_folder = 'static'
 
 YANDEX_LINKS = [
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/NoB7Q_cDuTHMWA",
