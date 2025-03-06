@@ -75,7 +75,6 @@ def stream_audio():
                     continue
                 time.sleep(0.05)
             start_index = 0
-
     return Response(generate(), mimetype='audio/mpeg')
 
 @bot.message_handler(commands=['start'])
@@ -98,10 +97,6 @@ def send_welcome(message):
         print(f"Ошибка в /start: {e}")
         bot.reply_to(message, f"Ошибка: {e}")
 
-def run_flask():
-    print("Запуск Flask-сервера...")
-    app.run(host='0.0.0.0', port=5000)
-
 def run_bot():
     print("Запуск Telegram бота...")
     try:
@@ -111,9 +106,6 @@ def run_bot():
 
 if __name__ == '__main__':
     print("Приложение запускается...")
-    flask_thread = threading.Thread(target=run_flask)
     bot_thread = threading.Thread(target=run_bot)
-    flask_thread.start()
     bot_thread.start()
-    flask_thread.join()
-    bot_thread.join()
+    app.run(host='0.0.0.0', port=5000)  # Flask в основном потоке
