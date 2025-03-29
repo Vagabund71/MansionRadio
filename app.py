@@ -8,8 +8,8 @@ import threading
 import random
 import logging
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Настройка логирования с выводом в stdout
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler()])
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -36,7 +36,7 @@ YANDEX_LINKS = [
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/UWxsiE-_Dl6DgA",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/v4D9MaO4LRCvXA",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/0RR9gqIx68CHLw",
-    "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/KFCc6UnLIjl Daemons.ru/yandex/get/https://disk.yandex.ru/d/KFCc6UnLIjlKuw",
+    "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/KFCc6UnLIjlKuw",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/h3xjuQJz408R3A",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/7kXxPa2r8x_WfQ",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/B-mB4AVpAPhhtg",
@@ -73,7 +73,7 @@ def stream_audio():
             yandex_link = YANDEX_LINKS[current_song_index]
             logger.info(f"Начало стриминга: {yandex_link}")
             try:
-                response = requests.get(yandex_link, stream=True)
+                response = requests.get(yandex_link, stream=True, timeout=10)
                 response.raw.decode_content = True
                 for data in response.iter_content(chunk_size=4096):
                     if data:
@@ -93,12 +93,15 @@ def send_radio_button(chat_id):
         web_app=telebot.types.WebAppInfo(url="https://mansionradio.onrender.com")
     )
     keyboard.add(web_app_button)
-    bot.send_message(
-        chat_id,
-        "🎧 Добро пожаловать в наше DJ-радио!\n\n"
-        "Нажми кнопку ниже, чтобы запустить радио.",
-        reply_markup=keyboard
-    )
+    try:
+        bot.send_message(
+            chat_id,
+            "🎧 Добро пожаловать в наше DJ-радио!\n\n"
+            "Нажми кнопку ниже, чтобы запустить радио.",
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        logger.error(f"Ошибка отправки сообщения в чат {chat_id}: {e}")
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -110,7 +113,16 @@ def handle_all_messages(message):
     logger.info(f"Сообщение от {message.from_user.id}: {message.text if message.text else 'не текст'}")
     send_radio_button(message.chat.id)
 
+def run_bot():
+    while True:
+        try:
+            logger.info("Запуск Telegram-бота...")
+            bot.infinity_polling(skip_pending=True, timeout=20, long_polling_timeout=50)
+        except Exception as e:
+            logger.error(f"Ошибка в polling: {e}")
+            time.sleep(5)  # Перезапуск через 5 секунд
+
 # Запускаем Telegram-бот в отдельном потоке при импорте модуля
 logger.info("Инициализация приложения...")
-bot_thread = threading.Thread(target=lambda: bot.infinity_polling(skip_pending=True), daemon=True)
+bot_thread = threading.Thread(target=run_bot, daemon=True)
 bot_thread.start()
