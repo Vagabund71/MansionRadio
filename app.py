@@ -6,14 +6,11 @@ import os
 from dotenv import load_dotenv
 import threading
 import random
-<<<<<<< HEAD
 import logging
 
 # Настройка логирования для диагностики
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-=======
->>>>>>> ef5a57b45621de91cb632183186aa2b45aeb2340
 
 load_dotenv()
 API_TOKEN = os.getenv('API_TOKEN')
@@ -71,7 +68,6 @@ def stream_audio():
     def generate():
         global current_song_index, current_song_start_time
         if not YANDEX_LINKS:
-<<<<<<< HEAD
             logger.error("Список YANDEX_LINKS пуст, стриминг невозможен.")
             return
         while True:
@@ -86,25 +82,6 @@ def stream_audio():
                 logger.info(f"Конец стриминга: {yandex_link}")
             except Exception as e:
                 logger.error(f"Ошибка стриминга {yandex_link}: {e}")
-=======
-            print("Список YANDEX_LINKS пуст, стриминг невозможен.")
-            return
-        while True:
-            yandex_link = YANDEX_LINKS[current_song_index]
-            print(f"Начало стриминга: {yandex_link} в {time.strftime('%H:%M:%S')}")
-            try:
-                response = requests.get(yandex_link, stream=True)
-                response.raw.decode_content = True
-                while True:
-                    data = response.raw.read(4096)
-                    if not data:
-                        break
-                    yield data
-                print(f"Конец стриминга: {yandex_link}")
-            except Exception as e:
-                print(f"Ошибка стриминга {yandex_link}: {e}")
-                continue
->>>>>>> ef5a57b45621de91cb632183186aa2b45aeb2340
             current_song_index = (current_song_index + 1) % len(YANDEX_LINKS)
             current_song_start_time = time.time()
             time.sleep(0.05)
@@ -126,16 +103,11 @@ def send_radio_button(chat_id):
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-<<<<<<< HEAD
     logger.info(f"Команда /start от {message.from_user.id}")
-=======
-    print(f"Команда /start от {message.from_user.id}")
->>>>>>> ef5a57b45621de91cb632183186aa2b45aeb2340
     send_radio_button(message.chat.id)
 
 @bot.message_handler(content_types=['text', 'photo', 'video', 'audio', 'document', 'sticker'])
 def handle_all_messages(message):
-<<<<<<< HEAD
     logger.info(f"Сообщение от {message.from_user.id}: {message.text if message.text else 'не текст'}")
     send_radio_button(message.chat.id)
 
@@ -150,13 +122,5 @@ if __name__ == '__main__':
     bot_thread.start()
     
     # Запускаем Flask-сервер
-=======
-    print(f"Сообщение от {message.from_user.id}: {message.text if message.text else 'не текст'}")
-    send_radio_button(message.chat.id)
-
-if __name__ == '__main__':
-    print("Приложение запускается...")
-    threading.Thread(target=bot.infinity_polling, kwargs={'skip_pending': True}, daemon=True).start()
->>>>>>> ef5a57b45621de91cb632183186aa2b45aeb2340
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
