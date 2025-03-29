@@ -76,21 +76,21 @@ def stream_audio():
             logger.info(f"Начало стриминга: {yandex_link}")
             try:
                 with requests.get(yandex_link, stream=True, timeout=15) as response:
+                    logger.info(f"Статус ответа от Yandex: {response.status_code}")
                     response.raise_for_status()
                     response.raw.decode_content = True
-                    chunk_count = 0
-                    # Отправляем начальные данные быстро
-                    initial_chunk = response.raw.read(16384)  # 16KB для быстрого старта
+                    initial_chunk = response.raw.read(16384)
                     if initial_chunk:
+                        logger.info(f"Отправлен начальный чанк ({len(initial_chunk)} байт) для {yandex_link}")
                         yield initial_chunk
-                        chunk_count += 1
-                        logger.info(f"Отправлен начальный чанк для {yandex_link}")
+                    else:
+                        logger.warning(f"Начальный чанк пустой для {yandex_link}")
+                    chunk_count = 1 if initial_chunk else 0
                     for data in response.iter_content(chunk_size=8192):
                         if data:
                             chunk_count += 1
+                            logger.info(f"Отправлен чанк {chunk_count} ({len(data)} байт) для {yandex_link}")
                             yield data
-                            if chunk_count % 10 == 0:
-                                logger.info(f"Отправлено {chunk_count} чанков для {yandex_link}")
                         else:
                             logger.warning(f"Получены пустые данные для {yandex_link}")
                     logger.info(f"Конец стриминга: {yandex_link}, отправлено {chunk_count} чанков")
