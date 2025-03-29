@@ -122,14 +122,19 @@ def run_bot():
             logger.error(f"Ошибка в polling: {e}")
             time.sleep(5)
 
-# Запускаем бота только в одном процессе
-if 'GUNICORN_CMD_ARGS' not in os.environ:  # Локальный запуск
+# Используем блокировку для запуска бота только в одном процессе
+bot_lock = threading.Lock()
+bot_started = False
+
+if not bot_started:
+    with bot_lock:
+        if not bot_started:
+            logger.info("Инициализация приложения и запуск бота...")
+            bot_thread = threading.Thread(target=run_bot, daemon=True)
+            bot_thread.start()
+            bot_started = True
+
+if __name__ == '__main__':
     logger.info("Локальный запуск приложения...")
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-else:  # Запуск через Gunicorn на Render
-    logger.info("Инициализация приложения на Render...")
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
