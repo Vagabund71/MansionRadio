@@ -1,10 +1,9 @@
 import telebot
 import time
 import requests
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 import os
 from dotenv import load_dotenv
-import threading
 import random
 import logging
 
@@ -79,27 +78,16 @@ def stream_audio():
                     logger.info(f"Статус ответа от Yandex: {response.status_code}")
                     response.raise_for_status()
                     response.raw.decode_content = True
-                    initial_chunk = response.raw.read(16384)
-                    if initial_chunk:
-                        logger.info(f"Отправлен начальный чанк ({len(initial_chunk)} байт) для {yandex_link}")
-                        yield initial_chunk
-                    else:
-                        logger.warning(f"Начальный чанк пустой для {yandex_link}")
-                    chunk_count = 1 if initial_chunk else 0
                     for data in response.iter_content(chunk_size=8192):
                         if data:
-                            chunk_count += 1
-                            logger.info(f"Отправлен чанк {chunk_count} ({len(data)} байт) для {yandex_link}")
+                            logger.info(f"Отправлено {len(data)} байт для {yandex_link}")
                             yield data
                         else:
                             logger.warning(f"Получены пустые данные для {yandex_link}")
-                    logger.info(f"Конец стриминга: {yandex_link}, отправлено {chunk_count} чанков")
+                    logger.info(f"Конец стриминга: {yandex_link}")
             except requests.RequestException as e:
                 logger.error(f"Ошибка стриминга {yandex_link}: {e}")
                 time.sleep(2)
-            except Exception as e:
-                logger.error(f"Неизвестная ошибка в стриминге {yandex_link}: {e}")
-                break
             current_song_index = (current_song_index + 1) % len(YANDEX_LINKS)
             current_song_start_time = time.time()
             time.sleep(0.5)
@@ -142,23 +130,27 @@ def handle_all_messages(message):
     logger.info(f"Сообщение от {message.from_user.id}: {message.text if message.text else 'не текст'}")
     send_radio_button(message.chat.id)
 
-def run_bot():
-    while True:
-        try:
-            logger.info("Запуск Telegram-бота...")
-            bot.infinity_polling(skip_pending=True, timeout=20, long_polling_timeout=50)
-        except Exception as e:
-            logger.error(f"Ошибка в polling: {e}")
-            time.sleep(5)
+# Вебхук для Telegram
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data(as_text=True)
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return '', 200
+    return '', 403
 
 @app.route('/ping')
 def ping():
     logger.info("Получен запрос /ping")
     return "Pong", 200
 
-logger.info("Инициализация приложения и запуск бота...")
-bot_thread = threading.Thread(target=run_bot, daemon=True)
-bot_thread.start()
+# Настройка вебхука
+WEBHOOK_URL = "https://mansionradio.onrender.com/webhook"
+logger.info(f"Установка вебхука: {WEBHOOK_URL}")
+bot.remove_webhook()
+time.sleep(1)
+bot.set_webhook(url=WEBHOOK_URL)
 
 if __name__ == '__main__':
     logger.info("Локальный запуск приложения...")
