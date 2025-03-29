@@ -51,12 +51,14 @@ current_song_start_time = time.time()
 
 @app.route('/')
 def serve_index():
+    logger.info("Запрос главной страницы")
     return app.send_static_file('index.html')
 
 @app.route('/current_song')
 def get_current_song():
     global current_song_index, current_song_start_time
     elapsed_time = time.time() - current_song_start_time
+    logger.info(f"Текущая песня: {YANDEX_LINKS[current_song_index]}, прошло времени: {elapsed_time}")
     return jsonify({
         'song_url': YANDEX_LINKS[current_song_index],
         'elapsed_time': elapsed_time
@@ -74,16 +76,19 @@ def stream_audio():
             logger.info(f"Начало стриминга: {yandex_link}")
             try:
                 response = requests.get(yandex_link, stream=True, timeout=10)
+                response.raise_for_status()  # Проверка на ошибки HTTP
                 response.raw.decode_content = True
                 for data in response.iter_content(chunk_size=4096):
                     if data:
                         yield data
                 logger.info(f"Конец стриминга: {yandex_link}")
-            except Exception as e:
+            except requests.RequestException as e:
                 logger.error(f"Ошибка стриминга {yandex_link}: {e}")
+                break  # Прерываем, чтобы не зависать
             current_song_index = (current_song_index + 1) % len(YANDEX_LINKS)
             current_song_start_time = time.time()
-            time.sleep(0.05)
+            time.sleep(0.5)  # Увеличим паузу между треками
+    logger.info("Начало потока /stream")
     return Response(generate(), mimetype='audio/mpeg')
 
 def send_radio_button(chat_id):
@@ -100,6 +105,7 @@ def send_radio_button(chat_id):
             "Нажми кнопку ниже, чтобы запустить радио.",
             reply_markup=keyboard
         )
+        logger.info(f"Сообщение с кнопкой отправлено в чат {chat_id}")
     except Exception as e:
         logger.error(f"Ошибка отправки сообщения в чат {chat_id}: {e}")
 
