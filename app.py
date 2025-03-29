@@ -122,17 +122,9 @@ def run_bot():
             logger.error(f"Ошибка в polling: {e}")
             time.sleep(5)
 
-# Используем блокировку для запуска бота только в одном процессе
-bot_lock = threading.Lock()
-bot_started = False
-
-if not bot_started:
-    with bot_lock:
-        if not bot_started:
-            logger.info("Инициализация приложения и запуск бота...")
-            bot_thread = threading.Thread(target=run_bot, daemon=True)
-            bot_thread.start()
-            bot_started = True
+logger.info("Инициализация приложения и запуск бота...")
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
 
 if __name__ == '__main__':
     logger.info("Локальный запуск приложения...")
