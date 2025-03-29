@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Mansion Radio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,10 +21,10 @@
             background: linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%);
             color: #fff;
             overflow: hidden;
-            user-select: none; /* Запрет выделения текста */
-            -webkit-user-select: none; /* Для Safari */
-            -moz-user-select: none; /* Для Firefox */
-            -ms-user-select: none; /* Для Edge */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         .player {
             background: rgba(255, 255, 255, 0.1);
@@ -32,7 +35,7 @@
             backdrop-filter: blur(10px);
             max-width: 400px;
             width: 90%;
-            user-select: none; /* Дополнительная защита для плеера */
+            user-select: none;
         }
         h1 {
             font-size: 2.5em;
@@ -61,7 +64,7 @@
             cursor: pointer;
             transition: transform 0.2s, background 0.3s;
             box-shadow: 0 5px 15px rgba(255, 75, 92, 0.4);
-            user-select: none; /* Запрет выделения на кнопках */
+            user-select: none;
         }
         button:hover {
             background: #ff6b7c;
@@ -79,7 +82,7 @@
             background: url('https://www.transparenttextures.com/patterns/wave.png');
             opacity: 0.2;
             animation: wave 10s infinite linear;
-            pointer-events: none; /* Отключаем взаимодействие с волнами */
+            pointer-events: none;
         }
         @keyframes wave {
             0% { background-position: 0 0; }
@@ -104,7 +107,15 @@
     <script>
         Telegram.WebApp.ready();
         const audio = document.getElementById('radio');
+
+        // Перезапуск при окончании или ошибке
         audio.addEventListener('ended', () => {
+            audio.src = '/stream?' + new Date().getTime(); // Обновляем URL для перезапуска
+            audio.play();
+        });
+        audio.addEventListener('error', () => {
+            console.log('Ошибка воспроизведения, перезапуск...');
+            audio.src = '/stream?' + new Date().getTime();
             audio.play();
         });
 
@@ -113,9 +124,15 @@
             e.preventDefault();
         }, { passive: false });
 
-        // Отключаем контекстное меню (правая кнопка мыши)
+        // Отключаем контекстное меню
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+        });
+
+        // Принудительный перезапуск при повторном открытии
+        window.addEventListener('load', () => {
+            audio.src = '/stream?' + new Date().getTime();
+            audio.play();
         });
     </script>
 </body>

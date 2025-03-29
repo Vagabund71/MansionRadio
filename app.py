@@ -79,11 +79,17 @@ def stream_audio():
                     response.raise_for_status()
                     response.raw.decode_content = True
                     chunk_count = 0
+                    # Отправляем начальные данные быстро
+                    initial_chunk = response.raw.read(16384)  # 16KB для быстрого старта
+                    if initial_chunk:
+                        yield initial_chunk
+                        chunk_count += 1
+                        logger.info(f"Отправлен начальный чанк для {yandex_link}")
                     for data in response.iter_content(chunk_size=8192):
                         if data:
                             chunk_count += 1
                             yield data
-                            if chunk_count % 10 == 0:  # Логируем каждые 10 чанков
+                            if chunk_count % 10 == 0:
                                 logger.info(f"Отправлено {chunk_count} чанков для {yandex_link}")
                         else:
                             logger.warning(f"Получены пустые данные для {yandex_link}")
@@ -98,7 +104,15 @@ def stream_audio():
             current_song_start_time = time.time()
             time.sleep(0.5)
     logger.info("Начало потока /stream")
-    return Response(generate(), mimetype='audio/mpeg', headers={'Cache-Control': 'no-cache'})
+    return Response(
+        generate(),
+        mimetype='audio/mpeg',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Content-Disposition': 'inline',
+            'Accept-Ranges': 'bytes'
+        }
+    )
 
 def send_radio_button(chat_id):
     keyboard = telebot.types.InlineKeyboardMarkup()
@@ -137,7 +151,6 @@ def run_bot():
             logger.error(f"Ошибка в polling: {e}")
             time.sleep(5)
 
-# Пинг для поддержания активности сервиса
 @app.route('/ping')
 def ping():
     logger.info("Получен запрос /ping")
