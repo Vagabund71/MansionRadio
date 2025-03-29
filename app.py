@@ -120,9 +120,16 @@ def run_bot():
             bot.infinity_polling(skip_pending=True, timeout=20, long_polling_timeout=50)
         except Exception as e:
             logger.error(f"Ошибка в polling: {e}")
-            time.sleep(5)  # Перезапуск через 5 секунд
+            time.sleep(5)
 
-# Запускаем Telegram-бот в отдельном потоке при импорте модуля
-logger.info("Инициализация приложения...")
-bot_thread = threading.Thread(target=run_bot, daemon=True)
-bot_thread.start()
+# Запускаем бота только в одном процессе
+if 'GUNICORN_CMD_ARGS' not in os.environ:  # Локальный запуск
+    logger.info("Локальный запуск приложения...")
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
+else:  # Запуск через Gunicorn на Render
+    logger.info("Инициализация приложения на Render...")
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
