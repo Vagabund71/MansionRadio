@@ -75,18 +75,22 @@ def stream_audio():
             yandex_link = YANDEX_LINKS[current_song_index]
             logger.info(f"Начало стриминга: {yandex_link}")
             try:
-                with requests.get(yandex_link, stream=True, timeout=10) as response:
+                with requests.get(yandex_link, stream=True, timeout=15) as response:
                     response.raise_for_status()
                     response.raw.decode_content = True
-                    for data in response.iter_content(chunk_size=8192):  # Увеличим размер чанка
+                    chunk_count = 0
+                    for data in response.iter_content(chunk_size=8192):
                         if data:
+                            chunk_count += 1
                             yield data
+                            if chunk_count % 10 == 0:  # Логируем каждые 10 чанков
+                                logger.info(f"Отправлено {chunk_count} чанков для {yandex_link}")
                         else:
                             logger.warning(f"Получены пустые данные для {yandex_link}")
-                    logger.info(f"Конец стриминга: {yandex_link}")
+                    logger.info(f"Конец стриминга: {yandex_link}, отправлено {chunk_count} чанков")
             except requests.RequestException as e:
                 logger.error(f"Ошибка стриминга {yandex_link}: {e}")
-                time.sleep(1)  # Пауза перед следующим треком при ошибке
+                time.sleep(2)
             except Exception as e:
                 logger.error(f"Неизвестная ошибка в стриминге {yandex_link}: {e}")
                 break
@@ -94,7 +98,7 @@ def stream_audio():
             current_song_start_time = time.time()
             time.sleep(0.5)
     logger.info("Начало потока /stream")
-    return Response(generate(), mimetype='audio/mpeg')
+    return Response(generate(), mimetype='audio/mpeg', headers={'Cache-Control': 'no-cache'})
 
 def send_radio_button(chat_id):
     keyboard = telebot.types.InlineKeyboardMarkup()
@@ -132,6 +136,12 @@ def run_bot():
         except Exception as e:
             logger.error(f"Ошибка в polling: {e}")
             time.sleep(5)
+
+# Пинг для поддержания активности сервиса
+@app.route('/ping')
+def ping():
+    logger.info("Получен запрос /ping")
+    return "Pong", 200
 
 logger.info("Инициализация приложения и запуск бота...")
 bot_thread = threading.Thread(target=run_bot, daemon=True)
