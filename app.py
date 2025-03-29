@@ -8,7 +8,7 @@ import threading
 import random
 import logging
 
-# Настройка логирования для диагностики
+# Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ YANDEX_LINKS = [
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/UWxsiE-_Dl6DgA",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/v4D9MaO4LRCvXA",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/0RR9gqIx68CHLw",
-    "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/KFCc6UnLIjlKuw",
+    "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/KFCc6UnLIjl Daemons.ru/yandex/get/https://disk.yandex.ru/d/KFCc6UnLIjlKuw",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/h3xjuQJz408R3A",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/7kXxPa2r8x_WfQ",
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/B-mB4AVpAPhhtg",
@@ -46,7 +46,6 @@ YANDEX_LINKS = [
     "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/Hf_OQYIkxrWNlw"
 ]
 
-# Устанавливаем случайный начальный индекс при запуске
 current_song_index = random.randint(0, len(YANDEX_LINKS) - 1)
 current_song_start_time = time.time()
 
@@ -111,16 +110,7 @@ def handle_all_messages(message):
     logger.info(f"Сообщение от {message.from_user.id}: {message.text if message.text else 'не текст'}")
     send_radio_button(message.chat.id)
 
-def run_bot():
-    logger.info("Запуск Telegram-бота...")
-    bot.infinity_polling(skip_pending=True)
-
-if __name__ == '__main__':
-    logger.info("Приложение запускается...")
-    # Запускаем Telegram-бот в отдельном потоке
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-    
-    # Запускаем Flask-сервер
-    port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+# Запускаем Telegram-бот в отдельном потоке при импорте модуля
+logger.info("Инициализация приложения...")
+bot_thread = threading.Thread(target=lambda: bot.infinity_polling(skip_pending=True), daemon=True)
+bot_thread.start()
