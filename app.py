@@ -75,19 +75,24 @@ def stream_audio():
             yandex_link = YANDEX_LINKS[current_song_index]
             logger.info(f"Начало стриминга: {yandex_link}")
             try:
-                response = requests.get(yandex_link, stream=True, timeout=10)
-                response.raise_for_status()  # Проверка на ошибки HTTP
-                response.raw.decode_content = True
-                for data in response.iter_content(chunk_size=4096):
-                    if data:
-                        yield data
-                logger.info(f"Конец стриминга: {yandex_link}")
+                with requests.get(yandex_link, stream=True, timeout=10) as response:
+                    response.raise_for_status()
+                    response.raw.decode_content = True
+                    for data in response.iter_content(chunk_size=8192):  # Увеличим размер чанка
+                        if data:
+                            yield data
+                        else:
+                            logger.warning(f"Получены пустые данные для {yandex_link}")
+                    logger.info(f"Конец стриминга: {yandex_link}")
             except requests.RequestException as e:
                 logger.error(f"Ошибка стриминга {yandex_link}: {e}")
-                break  # Прерываем, чтобы не зависать
+                time.sleep(1)  # Пауза перед следующим треком при ошибке
+            except Exception as e:
+                logger.error(f"Неизвестная ошибка в стриминге {yandex_link}: {e}")
+                break
             current_song_index = (current_song_index + 1) % len(YANDEX_LINKS)
             current_song_start_time = time.time()
-            time.sleep(0.5)  # Увеличим паузу между треками
+            time.sleep(0.5)
     logger.info("Начало потока /stream")
     return Response(generate(), mimetype='audio/mpeg')
 
